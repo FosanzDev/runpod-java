@@ -1,30 +1,29 @@
 package com.fosanzdev.runpodjava;
 
-import java.io.IOException;
-
 /**
- * Custom exception for RunPod API related errors with fallback information.
+ * Runtime exception wrapper for RunPod API operations.
+ * This allows users to interact with the client without handling IOException on every call.
  */
-public class RunPodException extends IOException {
+public class RunPodRuntimeException extends RuntimeException {
     private final boolean fallbackUsed;
     private final String originalError;
     private final String fallbackMethod;
 
-    public RunPodException(String message) {
+    public RunPodRuntimeException(String message) {
         super(message);
         this.fallbackUsed = false;
         this.originalError = null;
         this.fallbackMethod = null;
     }
 
-    public RunPodException(String message, Throwable cause) {
+    public RunPodRuntimeException(String message, Throwable cause) {
         super(message, cause);
         this.fallbackUsed = false;
         this.originalError = null;
         this.fallbackMethod = null;
     }
 
-    public RunPodException(String message, String originalError, String fallbackMethod) {
+    public RunPodRuntimeException(String message, String originalError, String fallbackMethod) {
         super(message);
         this.fallbackUsed = true;
         this.originalError = originalError;

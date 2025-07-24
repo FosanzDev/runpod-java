@@ -2,6 +2,7 @@ package com.fosanzdev.runpodjava.operations.queries.gpu;
 
 import com.fosanzdev.runpodjava.internal.BaseRunPodService;
 import com.fosanzdev.runpodjava.RunPodClient;
+import com.fosanzdev.runpodjava.RunPodRuntimeException;
 import com.fosanzdev.runpodjava.types.GpuType;
 
 import java.io.IOException;
@@ -40,9 +41,9 @@ public class GpuQueries extends BaseRunPodService {
      * - Datacenter information (nodeGroupDatacenters) - may be simplified on fallback
      *
      * @return List of GPU types with available information
-     * @throws IOException If all query attempts fail
+     * @throws RunPodRuntimeException if all query attempts fail
      */
-    public List<GpuType> getGpuTypes() throws IOException {
+    public List<GpuType> getGpuTypes() {
         return getGpuTypes(null);
     }
 
@@ -51,22 +52,26 @@ public class GpuQueries extends BaseRunPodService {
      *
      * @param input Filter criteria for GPU types
      * @return List of filtered GPU types with available information
-     * @throws IOException If all query attempts fail
+     * @throws RunPodRuntimeException if all query attempts fail
      */
-    public List<GpuType> getGpuTypes(GpuTypeFilter input) throws IOException {
-        String primaryQuery = buildCompleteGpuQuery();
-        String fallbackQuery = buildFallbackGpuQuery();
-        String minimalQuery = buildMinimalGpuQuery();
+    public List<GpuType> getGpuTypes(GpuTypeFilter input) {
+        try {
+            String primaryQuery = buildCompleteGpuQuery();
+            String fallbackQuery = buildFallbackGpuQuery();
+            String minimalQuery = buildMinimalGpuQuery();
 
-        Map<String, Object> variables = new HashMap<>();
-        if (input != null) {
-            variables.put("input", input);
+            Map<String, Object> variables = new HashMap<>();
+            if (input != null) {
+                variables.put("input", input);
+            }
+
+            return executeWithFallback(
+                    primaryQuery, fallbackQuery, minimalQuery,
+                    variables, GpuTypesResponse.class, "getGpuTypes"
+            ).getGpuTypes();
+        } catch (IOException e) {
+            throw new RunPodRuntimeException("Failed to retrieve GPU types", e);
         }
-
-        return executeWithFallback(
-                primaryQuery, fallbackQuery, minimalQuery,
-                variables, GpuTypesResponse.class, "getGpuTypes"
-        ).getGpuTypes();
     }
 
     /**
@@ -75,9 +80,9 @@ public class GpuQueries extends BaseRunPodService {
      * Will throw an exception if the complete query fails.
      *
      * @return List of GPU types with complete information
-     * @throws IOException If the complete query fails
+     * @throws RunPodRuntimeException if the complete query fails
      */
-    public List<GpuType> getGpuTypesComplete() throws IOException {
+    public List<GpuType> getGpuTypesComplete() {
         return getGpuTypesComplete(null);
     }
 
@@ -86,16 +91,20 @@ public class GpuQueries extends BaseRunPodService {
      *
      * @param input Filter criteria for GPU types
      * @return List of GPU types with complete information
-     * @throws IOException If the complete query fails
+     * @throws RunPodRuntimeException if the complete query fails
      */
-    public List<GpuType> getGpuTypesComplete(GpuTypeFilter input) throws IOException {
-        Map<String, Object> variables = new HashMap<>();
-        if (input != null) {
-            variables.put("input", input);
-        }
+    public List<GpuType> getGpuTypesComplete(GpuTypeFilter input) {
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            if (input != null) {
+                variables.put("input", input);
+            }
 
-        GpuTypesResponse response = execute(buildCompleteGpuQuery(), variables, GpuTypesResponse.class);
-        return response.getGpuTypes();
+            GpuTypesResponse response = execute(buildCompleteGpuQuery(), variables, GpuTypesResponse.class);
+            return response.getGpuTypes();
+        } catch (IOException e) {
+            throw new RunPodRuntimeException("Failed to retrieve complete GPU types", e);
+        }
     }
 
     /**
@@ -103,11 +112,15 @@ public class GpuQueries extends BaseRunPodService {
      * This method uses only the most stable fields and should always work.
      *
      * @return List of GPU types with basic information
-     * @throws IOException If even the basic query fails
+     * @throws RunPodRuntimeException if even the basic query fails
      */
-    public List<GpuType> getGpuTypesBasic() throws IOException {
-        GpuTypesResponse response = execute(buildMinimalGpuQuery(), null, GpuTypesResponse.class);
-        return response.getGpuTypes();
+    public List<GpuType> getGpuTypesBasic() {
+        try {
+            GpuTypesResponse response = execute(buildMinimalGpuQuery(), null, GpuTypesResponse.class);
+            return response.getGpuTypes();
+        } catch (IOException e) {
+            throw new RunPodRuntimeException("Failed to retrieve basic GPU types", e);
+        }
     }
 
     // Query builders for different levels of completeness

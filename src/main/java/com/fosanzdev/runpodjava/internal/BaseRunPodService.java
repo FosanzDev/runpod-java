@@ -2,14 +2,11 @@ package com.fosanzdev.runpodjava.internal;
 
 import com.fosanzdev.runpodjava.RunPodClient;
 import com.fosanzdev.runpodjava.RunPodClientConfig;
-import com.fosanzdev.runpodjava.RunPodException;
+import com.fosanzdev.runpodjava.RunPodRuntimeException;
 import com.fosanzdev.runpodjava.graphql.GraphQLException;
 
 import java.io.IOException;
 import java.util.Map;
-
-import static com.fosanzdev.runpodjava.RunPodClientConfig.FallbackStrategy.CONSERVATIVE;
-import static com.fosanzdev.runpodjava.RunPodClientConfig.FallbackStrategy.STRICT;
 
 /**
  * Base class for all RunPod service operations.
@@ -97,7 +94,7 @@ public abstract class BaseRunPodService {
                         try {
                             return execute(minimalQuery, variables, responseType);
                         } catch (IOException minimalError) {
-                            throw new RunPodException(
+                            throw new RunPodRuntimeException(
                                     "All query levels failed. Primary: " + primaryError.getMessage() +
                                             ", Fallback: " + fallbackError.getMessage() +
                                             ", Minimal: " + minimalError.getMessage(), primaryError);
