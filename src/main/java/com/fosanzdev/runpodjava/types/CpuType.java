@@ -1,14 +1,28 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "CpuType")
 public class CpuType {
+    @GraphQLField
     private String id;
+
+    @GraphQLField
     private String displayName;
+
+    @GraphQLField
     private String manufacturer;
+
+    @GraphQLField
     private int cores;
+
+    @GraphQLField
     private int threadsPerCore;
+
+    @GraphQLField
     private String groupId;
 
-    // Getters and Setters
+    // Getters and Setters remain unchanged
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
