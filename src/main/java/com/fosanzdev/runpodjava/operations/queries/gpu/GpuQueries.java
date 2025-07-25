@@ -1,29 +1,20 @@
 package com.fosanzdev.runpodjava.operations.queries.gpu;
 
-import com.fosanzdev.runpodjava.internal.BaseRunPodService;
 import com.fosanzdev.runpodjava.RunPodClient;
+import com.fosanzdev.runpodjava.RunPodClientConfig;
 import com.fosanzdev.runpodjava.RunPodRuntimeException;
+import com.fosanzdev.runpodjava.graphql.GraphQLException;
+import com.fosanzdev.runpodjava.graphql.GraphQLQueryBuilder;
+import com.fosanzdev.runpodjava.internal.BaseRunPodService;
+import com.fosanzdev.runpodjava.internal.FallbackLogger;
 import com.fosanzdev.runpodjava.types.GpuType;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * GPU-related queries for the RunPod API.
- * <p>
- * This class implements intelligent fallback mechanisms to ensure maximum reliability:
- * - Primary queries include all available fields (including lowestPrice, nodeGroupDatacenters, etc.)
- * - Fallback queries exclude problematic fields that may cause server errors
- * - Minimal queries include only essential fields for maximum compatibility
- * <p>
- * Fallback behavior can be configured via com.fosanzdev.runpodjava.RunPodClientConfig:
- * - AUTO (default): Try complete query, fall back automatically on server errors
- * - STRICT: Only use complete queries, fail if they don't work
- * - CONSERVATIVE: Always use basic queries for maximum reliability
- *
- * @see com.fosanzdev.runpodjava.RunPodClientConfig.FallbackStrategy
+ * GPU-related queries for the RunPod API with intelligent progressive fallback.
+ * Automatically removes problematic fields when server errors occur.
  */
 public class GpuQueries extends BaseRunPodService {
 
@@ -33,246 +24,112 @@ public class GpuQueries extends BaseRunPodService {
 
     /**
      * Get all GPU types with intelligent fallback handling.
-     * <p>
-     * This method will attempt to retrieve complete GPU information including:
-     * - Basic GPU specs (id, displayName, manufacturer, memory, cores)
-     * - Pricing information (all price fields)
-     * - Availability data (lowestPrice) - may be unavailable due to server issues
-     * - Datacenter information (nodeGroupDatacenters) - may be simplified on fallback
-     *
-     * @return List of GPU types with available information
-     * @throws RunPodRuntimeException if all query attempts fail
      */
     public List<GpuType> getGpuTypes() {
         return getGpuTypes(null);
     }
 
     /**
-     * Get GPU types with filter and intelligent fallback handling.
+     * Get GPU types with filter and intelligent progressive fallback.
      *
-     * @param input Filter criteria for GPU types
-     * @return List of filtered GPU types with available information
-     * @throws RunPodRuntimeException if all query attempts fail
+     * Behavior by fallback strategy:
+     * - STRICT: Uses complete query, fails if it doesn't work
+     * - AUTO: Progressively removes problematic fields until it works
+     * - CONSERVATIVE: Uses minimal query for maximum reliability
      */
     public List<GpuType> getGpuTypes(GpuTypeFilter input) {
-        try {
-            String primaryQuery = buildCompleteGpuQuery();
-            String fallbackQuery = buildFallbackGpuQuery();
-            String minimalQuery = buildMinimalGpuQuery();
+        RunPodClientConfig.FallbackStrategy strategy = client.getConfig().getFallbackStrategy();
 
+        try {
             Map<String, Object> variables = new HashMap<>();
             if (input != null) {
                 variables.put("input", input);
             }
 
-            return executeWithFallback(
-                    primaryQuery, fallbackQuery, minimalQuery,
-                    variables, GpuTypesResponse.class, "getGpuTypes"
-            ).getGpuTypes();
+            switch (strategy) {
+                case STRICT:
+                    return executeStrict(variables);
+
+                case AUTO:
+                default:
+                    return executeWithProgressiveFallback(variables);
+            }
+
         } catch (IOException e) {
             throw new RunPodRuntimeException("Failed to retrieve GPU types", e);
         }
     }
 
     /**
-     * Force retrieval of complete GPU information without fallbacks.
-     * Use this method when you specifically need all fields including lowestPrice.
-     * Will throw an exception if the complete query fails.
-     *
-     * @return List of GPU types with complete information
-     * @throws RunPodRuntimeException if the complete query fails
+     * STRICT mode: Use complete query or fail.
      */
-    public List<GpuType> getGpuTypesComplete() {
-        return getGpuTypesComplete(null);
+    private List<GpuType> executeStrict(Map<String, Object> variables) throws IOException {
+        String query = GraphQLQueryBuilder.buildQueryWithVariables(
+                GpuType.class, "gpuTypes", "gpuTypes", "$input: GpuTypeFilter"
+        );
+
+        GpuTypesResponse response = execute(query, variables, GpuTypesResponse.class);
+        return response.getGpuTypes();
     }
 
     /**
-     * Force retrieval of complete GPU information with filter, without fallbacks.
-     *
-     * @param input Filter criteria for GPU types
-     * @return List of GPU types with complete information
-     * @throws RunPodRuntimeException if the complete query fails
+     * AUTO mode: Progressive fallback by excluding problematic fields one by one.
      */
-    public List<GpuType> getGpuTypesComplete(GpuTypeFilter input) {
+    private List<GpuType> executeWithProgressiveFallback(Map<String, Object> variables) throws IOException {
+        List<String> excludableFields = GraphQLQueryBuilder.getFallbackExclusionList(GpuType.class);
+        Set<String> excludedFields = new HashSet<>();
+
+        // Try complete query first
         try {
-            Map<String, Object> variables = new HashMap<>();
-            if (input != null) {
-                variables.put("input", input);
-            }
+            String query = GraphQLQueryBuilder.buildQueryWithVariables(
+                    GpuType.class, "gpuTypes", "gpuTypes", "$input: GpuTypeFilter", excludedFields
+            );
 
-            GpuTypesResponse response = execute(buildCompleteGpuQuery(), variables, GpuTypesResponse.class);
+            GpuTypesResponse response = execute(query, variables, GpuTypesResponse.class);
             return response.getGpuTypes();
-        } catch (IOException e) {
-            throw new RunPodRuntimeException("Failed to retrieve complete GPU types", e);
+
+        } catch (GraphQLException e) {
+            if (!e.isServerInternalError()) {
+                throw e; // Not a server error we can handle with fallback
+            }
+
+            if (client.getConfig().shouldLogFallbacks()) {
+                FallbackLogger.logFallback("getGpuTypes", "Server internal error",
+                        "trying progressive field exclusion", true);
+            }
         }
-    }
 
-    /**
-     * Get basic GPU information for maximum reliability.
-     * This method uses only the most stable fields and should always work.
-     *
-     * @return List of GPU types with basic information
-     * @throws RunPodRuntimeException if even the basic query fails
-     */
-    public List<GpuType> getGpuTypesBasic() {
-        try {
-            GpuTypesResponse response = execute(buildMinimalGpuQuery(), null, GpuTypesResponse.class);
-            return response.getGpuTypes();
-        } catch (IOException e) {
-            throw new RunPodRuntimeException("Failed to retrieve basic GPU types", e);
+        // Progressive fallback: exclude fields one by one until it works
+        for (String fieldToExclude : excludableFields) {
+            excludedFields.add(fieldToExclude);
+
+            try {
+                String query = GraphQLQueryBuilder.buildQueryWithVariables(
+                        GpuType.class, "gpuTypes", "gpuTypes", "$input: GpuTypeFilter", excludedFields
+                );
+
+                if (client.getConfig().shouldLogFallbacks()) {
+                    FallbackLogger.logFieldMissing("getGpuTypes", fieldToExclude, true);
+                }
+
+                GpuTypesResponse response = execute(query, variables, GpuTypesResponse.class);
+
+                if (client.getConfig().shouldLogFallbacks()) {
+                    FallbackLogger.logFallback("getGpuTypes", "Progressive fallback successful",
+                            "excluded " + excludedFields.size() + " problematic fields", true);
+                }
+
+                return response.getGpuTypes();
+
+            } catch (GraphQLException e) {
+                if (!e.isServerInternalError()) {
+                    throw e; // Not a server error we can handle
+                }
+                // Continue to next exclusion
+            }
         }
-    }
 
-    // Query builders for different levels of completeness
-
-    private String buildCompleteGpuQuery() {
-        return """
-            query gpuTypes($input: GpuTypeFilter) {
-              gpuTypes(input: $input) {
-                lowestPrice {
-                  gpuName
-                  gpuTypeId
-                  minimumBidPrice
-                  uninterruptablePrice
-                  minMemory
-                  minVcpu
-                  rentalPercentage
-                  rentedCount
-                  totalCount
-                  stockStatus
-                  minDownload
-                  minDisk
-                  minUpload
-                  countryCode
-                  supportPublicIp
-                  compliance
-                  maxGpuCount
-                  maxUnreservedGpuCount
-                  availableGpuCounts
-                }
-                maxGpuCount
-                maxGpuCountCommunityCloud
-                maxGpuCountSecureCloud
-                minPodGpuCount
-                nodeGroupGpuSizes
-                nodeGroupDatacenters {
-                  id
-                  name
-                  location
-                  storage {
-                    hostname
-                    ips
-                    pw
-                    type
-                    user
-                    list {
-                      mnt
-                      pw
-                      servers
-                      type
-                      versions
-                      primary
-                    }
-                  }
-                  globalNetwork
-                  storageSupport
-                  listed
-                  gpuAvailability {
-                    available
-                    stockStatus
-                    gpuTypeId
-                    gpuTypeDisplayName
-                    displayName
-                    id
-                  }
-                  compliance
-                }
-                id
-                displayName
-                manufacturer
-                memoryInGb
-                cudaCores
-                secureCloud
-                communityCloud
-                securePrice
-                clusterPrice
-                communityPrice
-                oneMonthPrice
-                threeMonthPrice
-                sixMonthPrice
-                oneWeekPrice
-                communitySpotPrice
-                secureSpotPrice
-                throughput
-              }
-            }
-            """;
-    }
-
-    private String buildFallbackGpuQuery() {
-        return """
-            query gpuTypes($input: GpuTypeFilter) {
-              gpuTypes(input: $input) {
-                maxGpuCount
-                maxGpuCountCommunityCloud
-                maxGpuCountSecureCloud
-                minPodGpuCount
-                nodeGroupGpuSizes
-                nodeGroupDatacenters {
-                  id
-                  name
-                  location
-                  globalNetwork
-                  storageSupport
-                  listed
-                  compliance
-                  gpuAvailability {
-                    available
-                    stockStatus
-                    gpuTypeId
-                    gpuTypeDisplayName
-                    displayName
-                    id
-                  }
-                }
-                id
-                displayName
-                manufacturer
-                memoryInGb
-                cudaCores
-                secureCloud
-                communityCloud
-                securePrice
-                clusterPrice
-                communityPrice
-                oneMonthPrice
-                threeMonthPrice
-                sixMonthPrice
-                oneWeekPrice
-                communitySpotPrice
-                secureSpotPrice
-                throughput
-              }
-            }
-            """;
-    }
-
-    private String buildMinimalGpuQuery() {
-        return """
-            query gpuTypes($input: GpuTypeFilter) {
-              gpuTypes(input: $input) {
-                id
-                displayName
-                manufacturer
-                memoryInGb
-                cudaCores
-                secureCloud
-                communityCloud
-                securePrice
-                communityPrice
-                maxGpuCount
-              }
-            }
-            """;
+        // If we get here, even the minimal query failed
+        throw new RunPodRuntimeException("All fallback attempts failed, including minimal query");
     }
 }

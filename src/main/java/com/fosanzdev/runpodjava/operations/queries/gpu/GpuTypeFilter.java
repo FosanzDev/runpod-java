@@ -1,10 +1,17 @@
 package com.fosanzdev.runpodjava.operations.queries.gpu;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.util.List;
 
+@GraphQLField(typeName = "GpuTypeFilter")
 public class GpuTypeFilter {
+    @GraphQLField
     private String id;
+
+    @GraphQLField
     private List<String> ids;
+
+    @GraphQLField
     private Boolean cluster;
 
     // Constructors
@@ -45,7 +52,7 @@ public class GpuTypeFilter {
 
     @Override
     public String toString() {
-        return "com.fosanzdev.runpodjava.operations.queries.gpu.GpuTypeFilter{" +
+        return "GpuTypeFilter{" +
                 "id='" + id + '\'' +
                 ", ids=" + ids +
                 ", cluster=" + cluster +

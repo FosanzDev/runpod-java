@@ -9,13 +9,6 @@ public class RunPodClientConfig {
 
     public enum FallbackStrategy {
         /**
-         * Automatically fall back to simpler queries when server errors occur.
-         * Tries: Primary → Fallback → Minimal
-         * Recommended for production use.
-         */
-        AUTO,
-
-        /**
          * Always use the most complete query available, fail if it doesn't work.
          * Tries: Primary only
          * Use when you need all data or nothing.
@@ -23,11 +16,11 @@ public class RunPodClientConfig {
         STRICT,
 
         /**
-         * Always use basic queries to avoid potential server-side issues.
-         * Tries: Minimal only
-         * Use for maximum reliability with minimal data.
+         * Automatically fall back to simpler queries when server errors occur.
+         * Tries: Primary → Progressive field exclusion → Minimal
+         * Recommended for production use.
          */
-        CONSERVATIVE
+        AUTO
     }
 
     private RunPodClientConfig(Builder builder) {

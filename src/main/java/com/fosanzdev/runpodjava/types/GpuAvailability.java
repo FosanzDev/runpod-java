@@ -1,15 +1,28 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "GpuAvailability")
 public class GpuAvailability {
+    @GraphQLField
     private boolean available;
+
+    @GraphQLField
     private String stockStatus;
+
+    @GraphQLField
     private String gpuTypeId;
-    private GpuType gpuType;
+
+    @GraphQLField
     private String gpuTypeDisplayName;
+
+    @GraphQLField
     private String displayName;
+
+    @GraphQLField
     private String id;
 
-    // Getters and Setters
+    // Getters and Setters remain unchanged
     public boolean isAvailable() { return available; }
     public void setAvailable(boolean available) { this.available = available; }
 
@@ -18,9 +31,6 @@ public class GpuAvailability {
 
     public String getGpuTypeId() { return gpuTypeId; }
     public void setGpuTypeId(String gpuTypeId) { this.gpuTypeId = gpuTypeId; }
-
-    public GpuType getGpuType() { return gpuType; }
-    public void setGpuType(GpuType gpuType) { this.gpuType = gpuType; }
 
     public String getGpuTypeDisplayName() { return gpuTypeDisplayName; }
     public void setGpuTypeDisplayName(String gpuTypeDisplayName) { this.gpuTypeDisplayName = gpuTypeDisplayName; }
@@ -33,11 +43,10 @@ public class GpuAvailability {
 
     @Override
     public String toString() {
-        return "com.fosanzdev.runpodjava.types.GpuAvailability{" +
+        return "GpuAvailability{" +
                 "available=" + available +
                 ", stockStatus='" + stockStatus + '\'' +
                 ", gpuTypeId='" + gpuTypeId + '\'' +
-                ", gpuType=" + gpuType +
                 ", gpuTypeDisplayName='" + gpuTypeDisplayName + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", id='" + id + '\'' +

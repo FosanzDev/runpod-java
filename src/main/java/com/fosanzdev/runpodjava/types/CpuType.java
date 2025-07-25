@@ -4,25 +4,25 @@ import com.fosanzdev.runpodjava.graphql.GraphQLField;
 
 @GraphQLField(typeName = "CpuType")
 public class CpuType {
-    @GraphQLField
+    @GraphQLField(fallbackPriority = 0) // Essential field - never exclude
     private String id;
 
-    @GraphQLField
+    @GraphQLField(fallbackPriority = 0) // Essential field - never exclude
     private String displayName;
 
-    @GraphQLField
+    @GraphQLField(fallbackPriority = 1) // Important field
     private String manufacturer;
 
-    @GraphQLField
-    private int cores;
+    @GraphQLField(fallbackPriority = 1) // Important field
+    private Integer cores;
 
-    @GraphQLField
-    private int threadsPerCore;
+    @GraphQLField(fallbackPriority = 1) // Important field
+    private Integer threadsPerCore;
 
-    @GraphQLField
+    @GraphQLField(fallbackPriority = 1) // Important field
     private String groupId;
 
-    // Getters and Setters remain unchanged
+    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -32,18 +32,31 @@ public class CpuType {
     public String getManufacturer() { return manufacturer; }
     public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
 
-    public int getCores() { return cores; }
-    public void setCores(int cores) { this.cores = cores; }
+    public Integer getCores() { return cores; }
+    public void setCores(Integer cores) { this.cores = cores; }
 
-    public int getThreadsPerCore() { return threadsPerCore; }
-    public void setThreadsPerCore(int threadsPerCore) { this.threadsPerCore = threadsPerCore; }
+    public Integer getThreadsPerCore() { return threadsPerCore; }
+    public void setThreadsPerCore(Integer threadsPerCore) { this.threadsPerCore = threadsPerCore; }
 
     public String getGroupId() { return groupId; }
     public void setGroupId(String groupId) { this.groupId = groupId; }
 
+    // Convenience methods
+    public int getCoresOrDefault(int defaultValue) {
+        return cores != null ? cores : defaultValue;
+    }
+
+    public int getThreadsPerCoreOrDefault(int defaultValue) {
+        return threadsPerCore != null ? threadsPerCore : defaultValue;
+    }
+
+    public int getTotalThreads() {
+        return getCoresOrDefault(0) * getThreadsPerCoreOrDefault(1);
+    }
+
     @Override
     public String toString() {
-        return "com.fosanzdev.runpodjava.types.CpuType{" +
+        return "CpuType{" +
                 "id='" + id + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", manufacturer='" + manufacturer + '\'' +

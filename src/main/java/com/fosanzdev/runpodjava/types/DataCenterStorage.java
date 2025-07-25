@@ -1,16 +1,29 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.util.List;
 
+@GraphQLField(typeName = "DataCenterStorage")
 public class DataCenterStorage {
+    @GraphQLField
     private String hostname;
+
+    @GraphQLField
     private List<String> ips;
+
+    @GraphQLField
     private String pw;
+
+    @GraphQLField
     private String type;
+
+    @GraphQLField
     private String user;
+
+    @GraphQLField
     private List<DataCenterStorageList> list;
 
-    // Getters and Setters
+    // Getters and Setters remain unchanged
     public String getHostname() { return hostname; }
     public void setHostname(String hostname) { this.hostname = hostname; }
 

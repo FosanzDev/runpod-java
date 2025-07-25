@@ -1,19 +1,38 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.util.List;
 
+@GraphQLField(typeName = "DataCenter")
 public class DataCenter {
+    @GraphQLField
     private String id;
+
+    @GraphQLField
     private String name;
+
+    @GraphQLField
     private String location;
+
+    @GraphQLField
     private DataCenterStorage storage;
+
+    @GraphQLField
     private boolean globalNetwork;
+
+    @GraphQLField
     private boolean storageSupport;
+
+    @GraphQLField
     private boolean listed;
+
+    @GraphQLField
     private List<GpuAvailability> gpuAvailability;
+
+    @GraphQLField
     private List<String> compliance;
 
-    // Getters and Setters
+    // Getters and Setters remain unchanged
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -40,4 +59,19 @@ public class DataCenter {
 
     public List<String> getCompliance() { return compliance; }
     public void setCompliance(List<String> compliance) { this.compliance = compliance; }
+
+    @Override
+    public String toString() {
+        return "DataCenter{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", location='" + location + '\'' +
+                ", storage=" + storage +
+                ", globalNetwork=" + globalNetwork +
+                ", storageSupport=" + storageSupport +
+                ", listed=" + listed +
+                ", gpuAvailability=" + gpuAvailability +
+                ", compliance=" + compliance +
+                '}';
+    }
 }

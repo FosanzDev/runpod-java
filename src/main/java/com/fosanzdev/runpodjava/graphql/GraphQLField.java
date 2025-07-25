@@ -5,26 +5,19 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Annotation to mark fields that should be included in GraphQL queries.
- * When used on a class, it indicates the GraphQL type name.
- * When used on fields, it indicates they should be included in queries.
- */
 @Target({ElementType.FIELD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GraphQLField {
-    /**
-     * The GraphQL field name. If empty, uses the Java field name.
-     */
     String value() default "";
-
-    /**
-     * Whether this field should be included by default in queries.
-     */
+    String typeName() default "";
     boolean include() default true;
 
     /**
-     * The GraphQL type name (used on class level).
+     * Priority for fallback exclusion. Higher values are excluded first.
+     * 0 = Essential field (never excluded)
+     * 1 = Important field (excluded last)
+     * 5 = Normal field
+     * 10 = Optional field (excluded first)
      */
-    String typeName() default "";
+    int fallbackPriority() default 5;
 }

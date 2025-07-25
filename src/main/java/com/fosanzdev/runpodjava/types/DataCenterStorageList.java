@@ -1,16 +1,29 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.util.List;
 
+@GraphQLField(typeName = "DataCenterStorageList")
 public class DataCenterStorageList {
+    @GraphQLField
     private String mnt;
+
+    @GraphQLField
     private String pw;
+
+    @GraphQLField
     private List<String> servers;
+
+    @GraphQLField
     private String type;
+
+    @GraphQLField
     private List<Integer> versions;
+
+    @GraphQLField
     private boolean primary;
 
-    // Getters and Setters
+    // Getters and Setters remain unchanged
     public String getMnt() { return mnt; }
     public void setMnt(String mnt) { this.mnt = mnt; }
 
