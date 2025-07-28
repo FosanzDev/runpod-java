@@ -1,13 +1,26 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.util.List;
 
+@GraphQLField(typeName = "IPAddress")
 public class IPAddress {
+    @GraphQLField(fallbackPriority = 0)
     private String id;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String address;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String networkRangeId;
+    
+    @GraphQLField(fallbackPriority = 5)
     private NetworkRange networkRange;
+    
+    @GraphQLField(fallbackPriority = 5)
     private Pod pod;
+    
+    @GraphQLField(fallbackPriority = 5)
     private List<PodnetNode> podnetNodes;
 
     // Getters and Setters

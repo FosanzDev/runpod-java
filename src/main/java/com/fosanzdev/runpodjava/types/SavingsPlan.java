@@ -1,18 +1,41 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.time.LocalDateTime;
 
+@GraphQLField(typeName = "SavingsPlan")
 public class SavingsPlan {
+    @GraphQLField(fallbackPriority = 0)
     private String id;
+    
+    @GraphQLField(fallbackPriority = 0)
     private LocalDateTime endTime;
+    
+    @GraphQLField(fallbackPriority = 0)
     private LocalDateTime startTime;
+    
+    @GraphQLField(fallbackPriority = 5)
     private GpuType gpuType;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String podId;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String gpuTypeId;
+    
+    @GraphQLField(fallbackPriority = 5)
     private Pod pod;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String savingsPlanType;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Double costPerHr;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Double upfrontCost;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String planLength;
 
     // Getters and Setters

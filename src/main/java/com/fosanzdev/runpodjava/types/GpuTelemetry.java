@@ -1,10 +1,22 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "GpuTelemetry")
 public class GpuTelemetry {
+    @GraphQLField(fallbackPriority = 0)
     private String id;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Double percentUtilization;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Double temperatureCelcius;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Double memoryUtilization;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Double powerWatts;
 
     // Getters and Setters

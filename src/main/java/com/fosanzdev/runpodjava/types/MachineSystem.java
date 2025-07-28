@@ -1,13 +1,31 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "MachineSystem")
 public class MachineSystem {
+    @GraphQLField(fallbackPriority = 0)
     private String os;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String cudaVersion;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer diskTotal;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer diskFree;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String privateIp;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String dockerVersion;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String kernelVersion;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String publicIp;
 
     // Getters and Setters

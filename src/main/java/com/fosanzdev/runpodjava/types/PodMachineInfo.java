@@ -1,39 +1,104 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.time.LocalDateTime;
 
+@GraphQLField(typeName = "PodMachineInfo")
 public class PodMachineInfo {
+    @GraphQLField(fallbackPriority = 0)
     private String id;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Double costPerHr;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Double currentPricePerGpu;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer diskMBps;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer gpuAvailable;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String gpuDisplayName;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String gpuTypeId;
+    
+    @GraphQLField(fallbackPriority = 1)
     private GpuType gpuType;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Boolean listed;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String location;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String machineType;
+    
+    @GraphQLField(fallbackPriority = 5)
     private LocalDateTime maintenanceEnd;
+    
+    @GraphQLField(fallbackPriority = 5)
     private String maintenanceNote;
+    
+    @GraphQLField(fallbackPriority = 5)
     private LocalDateTime maintenanceStart;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer maxDownloadSpeedMbps;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer maxUploadSpeedMbps;
+    
+    @GraphQLField(fallbackPriority = 5)
     private String note;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String podHostId;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String runpodIp;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Boolean secureCloud;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Boolean supportPublicIp;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer minPodGpuCount;
+    
+    @GraphQLField(fallbackPriority = 5)
     private MachineSystem machineSystem;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String dataCenterId;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String cpuTypeId;
+    
+    @GraphQLField(fallbackPriority = 5)
     private CpuType cpuType;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer cpuCount;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer vcpuTotal;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Double vcpuReserved;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer memoryTotal;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Double memoryReserved;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Boolean globalNetwork;
 
     // Getters and Setters

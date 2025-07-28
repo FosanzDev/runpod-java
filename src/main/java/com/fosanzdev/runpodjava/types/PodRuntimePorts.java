@@ -1,10 +1,22 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "PodRuntimePorts")
 public class PodRuntimePorts {
+    @GraphQLField(fallbackPriority = 0)
     private String ip;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Boolean isIpPublic;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer privatePort;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer publicPort;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String type;
 
     // Getters and Setters

@@ -1,10 +1,22 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "NetworkVolume")
 public class NetworkVolume {
+    @GraphQLField(fallbackPriority = 0)
     private String id;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String name;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer size;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String dataCenterId;
+    
+    @GraphQLField(fallbackPriority = 5)
     private DataCenter dataCenter;
 
     // Getters and Setters

@@ -1,42 +1,111 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@GraphQLField(typeName = "Endpoint")
 public class Endpoint {
+    @GraphQLField(fallbackPriority = 5)
     private String aiKey;
+    
+    @GraphQLField(fallbackPriority = 5)
     private String gpuIds;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String id;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer idleTimeout;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String name;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String networkVolumeId;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String locations;
+    
+    @GraphQLField(fallbackPriority = 5)
     private List<Pod> pods;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String scalerType;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer scalerValue;
+    
+    @GraphQLField(fallbackPriority = 5)
     private PodTemplate template;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String templateId;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String type;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String userId;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer version;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer workersMax;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer workersMin;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer workersStandby;
+    
+    @GraphQLField(fallbackPriority = 5)
     private Integer workersPFBTarget;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer gpuCount;
+    
+    @GraphQLField(fallbackPriority = 5)
     private List<EnvironmentVariable> env;
+    
+    @GraphQLField(fallbackPriority = 1)
     private LocalDateTime createdAt;
+    
+    @GraphQLField(fallbackPriority = 5)
     private String allowedCudaVersions;
+    
+    @GraphQLField(fallbackPriority = 5)
     private Integer executionTimeoutMs;
+    
+    @GraphQLField(fallbackPriority = 5)
     private List<String> instanceIds;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String computeType;
+    
+    @GraphQLField(fallbackPriority = 5)
     private List<GitBuild> builds;
+    
+    @GraphQLField(fallbackPriority = 5)
     private String activeBuildid;
+    
+    @GraphQLField(fallbackPriority = 5)
     private Repo repo;
+    
+    @GraphQLField(fallbackPriority = 5)
     private HubRelease hubRelease;
+    
+    @GraphQLField(fallbackPriority = 5)
     private String idePodId;
+    
+    @GraphQLField(fallbackPriority = 5)
     private List<WorkerState> workerState;
+    
+    @GraphQLField(fallbackPriority = 5)
     private List<WebhookRequestStatus> webhookRequests;
+    
+    @GraphQLField(fallbackPriority = 5)
     private NetworkVolume networkVolume;
 
     // Getters and Setters

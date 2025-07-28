@@ -1,10 +1,22 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "PodRegistry")
 public class PodRegistry {
+    @GraphQLField(fallbackPriority = 0)
     private String auth;
+    
+    @GraphQLField(fallbackPriority = 1)
     private String pass;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String url;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String user;
+    
+    @GraphQLField(fallbackPriority = 0)
     private String username;
 
     // Getters and Setters

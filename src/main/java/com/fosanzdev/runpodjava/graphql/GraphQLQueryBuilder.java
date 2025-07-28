@@ -7,23 +7,29 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Utility class to build GraphQL queries from annotated classes with intelligent fallback support.
+ * Utility class to build GraphQL queries from annotated classes with intelligent fallback and depth limit support.
  */
 public class GraphQLQueryBuilder {
 
-    /**
-     * Builds a simple GraphQL query without variables.
-     */
+    private static final int DEFAULT_MAX_DEPTH = 3;
+    private static final int DEFAULT_FALLBACK_THRESHOLD = 0;
+
+    // === PUBLIC METHODS ===
+
     public static String buildQuery(Class<?> clazz, String queryName, String operationName) {
-        return buildQuery(clazz, queryName, operationName, new HashSet<>());
+        return buildQuery(clazz, queryName, operationName, new HashSet<>(), DEFAULT_MAX_DEPTH, DEFAULT_FALLBACK_THRESHOLD);
     }
 
-    /**
-     * Builds a simple GraphQL query without variables with field exclusions.
-     */
     public static String buildQuery(Class<?> clazz, String queryName, String operationName, Set<String> excludedFields) {
-        String fields = buildFieldsFromClass(clazz, new HashSet<>(), 0, excludedFields);
+        return buildQuery(clazz, queryName, operationName, excludedFields, DEFAULT_MAX_DEPTH, DEFAULT_FALLBACK_THRESHOLD);
+    }
 
+    public static String buildQuery(Class<?> clazz, String queryName, String operationName, Set<String> excludedFields, int maxDepth) {
+        return buildQuery(clazz, queryName, operationName, excludedFields, maxDepth, DEFAULT_FALLBACK_THRESHOLD);
+    }
+
+    public static String buildQuery(Class<?> clazz, String queryName, String operationName, Set<String> excludedFields, int maxDepth, int fallbackThreshold) {
+        String fields = buildFieldsFromClass(clazz, new HashSet<>(), 0, excludedFields, "", maxDepth, fallbackThreshold);
         return String.format("""
         query %s {
           %s {
@@ -33,48 +39,63 @@ public class GraphQLQueryBuilder {
         """, queryName, operationName, fields);
     }
 
-    /**
-     * Builds a GraphQL query with variables and field exclusions for fallback.
-     */
+    public static String buildQueryWithVariables(Class<?> clazz, String queryName, String operationName, String variables) {
+        return buildQueryWithVariables(clazz, queryName, operationName, variables, new HashSet<>(), DEFAULT_MAX_DEPTH, DEFAULT_FALLBACK_THRESHOLD);
+    }
+
     public static String buildQueryWithVariables(Class<?> clazz, String queryName, String operationName,
                                                  String variables, Set<String> excludedFields) {
-        String fields = buildFieldsFromClass(clazz, new HashSet<>(), 0, excludedFields);
+        return buildQueryWithVariables(clazz, queryName, operationName, variables, excludedFields, DEFAULT_MAX_DEPTH, DEFAULT_FALLBACK_THRESHOLD);
+    }
 
+    public static String buildQueryWithVariables(Class<?> clazz, String queryName, String operationName,
+                                                 String variables, Set<String> excludedFields, int maxDepth) {
+        return buildQueryWithVariables(clazz, queryName, operationName, variables, excludedFields, maxDepth, DEFAULT_FALLBACK_THRESHOLD);
+    }
+
+    public static String buildQueryWithVariables(Class<?> clazz, String queryName, String operationName,
+                                                 String variables, Set<String> excludedFields, int maxDepth, int fallbackThreshold) {
+        String fields = buildFieldsFromClass(clazz, new HashSet<>(), 0, excludedFields, "", maxDepth, fallbackThreshold);
         return String.format("""
-            query %s(%s) {
-              %s(input: $input) {
-                %s
-              }
-            }
-            """, queryName, variables, operationName, fields);
+        query %s(%s) {
+          %s(input: $input) {
+            %s
+          }
+        }
+        """, queryName, variables, operationName, fields);
     }
 
-    /**
-     * Builds a GraphQL query with variables (no exclusions).
-     */
-    public static String buildQueryWithVariables(Class<?> clazz, String queryName, String operationName, String variables) {
-        return buildQueryWithVariables(clazz, queryName, operationName, variables, new HashSet<>());
-    }
-
-    /**
-     * Gets a list of fields that can be progressively excluded for fallback, ordered by priority.
-     * Returns field paths like "lowestPrice", "nodeGroupDatacenters.storage", etc.
-     */
     public static List<String> getFallbackExclusionList(Class<?> clazz) {
-        List<FieldInfo> allFields = collectAllFields(clazz, "", new HashSet<>());
-
+        List<FieldInfo> allFields = collectAllFields(clazz, new HashSet<>());
         return allFields.stream()
-                .filter(f -> f.priority > 0) // Only exclude non-essential fields
-                .sorted((f1, f2) -> Integer.compare(f2.priority, f1.priority)) // Higher priority excluded first
+                .filter(f -> f.priority > 0)
+                .sorted((f1, f2) -> Integer.compare(f2.priority, f1.priority))
                 .map(f -> f.path)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Collects all fields with their paths and priorities for fallback exclusion.
-     */
-    private static List<FieldInfo> collectAllFields(Class<?> clazz, String basePath, Set<Class<?>> visited) {
-        if (visited.contains(clazz)) {
+    // === PRIVATE METHODS ===
+
+    private static boolean isPrimitiveOrWrapper(Class<?> type) {
+        return type.isPrimitive() ||
+                type == Boolean.class ||
+                type == Byte.class ||
+                type == Character.class ||
+                type == Short.class ||
+                type == Integer.class ||
+                type == Long.class ||
+                type == Float.class ||
+                type == Double.class ||
+                type == String.class ||
+                type.isEnum();
+    }
+
+    private static List<FieldInfo> collectAllFields(Class<?> clazz, Set<Class<?>> visited) {
+        return collectAllFields(clazz, "", visited, 0, DEFAULT_MAX_DEPTH, GraphQLQueryBuilder.DEFAULT_FALLBACK_THRESHOLD);
+    }
+
+    private static List<FieldInfo> collectAllFields(Class<?> clazz, String basePath, Set<Class<?>> visited, int depth, int maxDepth, int fallbackThreshold) {
+        if (visited.contains(clazz) || depth >= maxDepth) {
             return new ArrayList<>();
         }
 
@@ -86,19 +107,19 @@ public class GraphQLQueryBuilder {
             GraphQLField annotation = field.getAnnotation(GraphQLField.class);
 
             if (annotation != null && annotation.include()) {
-                String fieldName = annotation.value().isEmpty() ?
-                        convertToGraphQLFieldName(field.getName()) :
-                        annotation.value();
+                if (annotation.fallbackPriority() > fallbackThreshold) continue;
+
+                String fieldName = annotation.value().isEmpty()
+                        ? convertToGraphQLFieldName(field.getName())
+                        : annotation.value();
 
                 String fullPath = basePath.isEmpty() ? fieldName : basePath + "." + fieldName;
 
-                // Add this field
                 fieldInfos.add(new FieldInfo(fullPath, annotation.fallbackPriority()));
 
-                // Add nested fields
                 Class<?> fieldType = getFieldClass(field);
                 if (hasGraphQLFieldAnnotation(fieldType)) {
-                    fieldInfos.addAll(collectAllFields(fieldType, fullPath, new HashSet<>(visited)));
+                    fieldInfos.addAll(collectAllFields(fieldType, fullPath, new HashSet<>(visited), depth + 1, maxDepth, fallbackThreshold));
                 }
             }
         }
@@ -107,157 +128,178 @@ public class GraphQLQueryBuilder {
         return fieldInfos;
     }
 
-    /**
-     * Builds the fields string from a class using reflection with exclusions.
-     */
-    private static String buildFieldsFromClass(Class<?> clazz, Set<Class<?>> visited, int depth, Set<String> excludedFields) {
-        if (visited.contains(clazz) || depth > 3) {
+    private static String buildFieldsFromClass(Class<?> clazz, Set<String> visitedPaths, int depth,
+                                               Set<String> excludedFields, String currentPath, int maxDepth,
+                                               int fallbackThreshold) {
+        if (visitedPaths.contains(currentPath) || depth >= maxDepth) {
             return "";
         }
 
-        visited.add(clazz);
+        visitedPaths.add(currentPath);
         List<String> fieldStrings = new ArrayList<>();
 
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields) {
+        for (Field field : clazz.getDeclaredFields()) {
             GraphQLField annotation = field.getAnnotation(GraphQLField.class);
-
             if (annotation != null && annotation.include()) {
-                String fieldName = annotation.value().isEmpty() ?
-                        convertToGraphQLFieldName(field.getName()) :
-                        annotation.value();
+                if (annotation.fallbackPriority() > fallbackThreshold) continue;
 
-                // Skip if this field is excluded
-                if (excludedFields.contains(fieldName)) {
+                String fieldName = annotation.value().isEmpty()
+                        ? convertToGraphQLFieldName(field.getName())
+                        : annotation.value();
+
+                String fullPath = currentPath.isEmpty() ? fieldName : currentPath + "." + fieldName;
+
+                if (excludedFields.contains(fieldName) || excludedFields.contains(fullPath)) {
                     continue;
                 }
 
-                String fieldString = buildFieldString(field, fieldName, visited, depth, excludedFields, "");
+                String fieldString = buildFieldString(field, fieldName, visitedPaths, depth, excludedFields, currentPath, maxDepth, fallbackThreshold);
                 if (!fieldString.isEmpty()) {
                     fieldStrings.add(fieldString);
                 }
             }
         }
 
-        visited.remove(clazz);
+        visitedPaths.remove(currentPath);
         return String.join("\n", fieldStrings);
     }
 
-    /**
-     * Builds a field string, handling nested objects with exclusions.
-     */
-    private static String buildFieldString(Field field, String fieldName, Set<Class<?>> visited,
-                                           int depth, Set<String> excludedFields, String basePath) {
-        Class<?> fieldType = getFieldClass(field);
+    private static String buildFieldString(Field field, String fieldName, Set<String> visitedPaths,
+                                           int depth, Set<String> excludedFields, String basePath,
+                                           int maxDepth, int fallbackThreshold) {
         String indent = getIndentation(depth + 1);
         String fullPath = basePath.isEmpty() ? fieldName : basePath + "." + fieldName;
 
+        Class<?> rawFieldType = field.getType();
+        Class<?> elementType = getFieldElementType(field);
+
         // Handle List types
-        if (List.class.isAssignableFrom(field.getType())) {
-            if (hasGraphQLFieldAnnotation(fieldType)) {
-                // Check if any nested fields of this list type should cause exclusion
-                if (shouldExcludeNestedObject(fieldType, fullPath, excludedFields)) {
-                    return ""; // Skip this entire field
+        if (List.class.isAssignableFrom(rawFieldType)) {
+            if (elementType != null && hasGraphQLFieldAnnotation(elementType)) {
+                if (shouldExcludeNestedObject(elementType, fullPath, excludedFields, fallbackThreshold)) {
+                    return "";
                 }
 
-                String nestedFields = buildFieldsFromClass(fieldType, visited, depth + 1, excludedFields);
+                if (depth + 1 >= maxDepth) {
+                    return ""; // Skip complex lists at max depth
+                }
+
+                String nestedFields = buildFieldsFromClass(elementType, visitedPaths, depth + 1, excludedFields, fullPath, maxDepth, fallbackThreshold);
                 if (!nestedFields.isEmpty()) {
                     return indent + fieldName + " {\n" + nestedFields + "\n" + indent + "}";
+                } else {
+                    return ""; // List of complex objects but no valid subfields
+                }
+            } else {
+                // List of primitives - check if the element type is actually primitive
+                if (elementType != null && isPrimitiveOrWrapper(elementType)) {
+                    return indent + fieldName;
+                } else {
+                    // Unknown or complex list type without annotations - skip to be safe
+                    return "";
                 }
             }
+        }
+
+        // Handle complex object types
+        if (hasGraphQLFieldAnnotation(rawFieldType)) {
+            if (shouldExcludeNestedObject(rawFieldType, fullPath, excludedFields, fallbackThreshold)) {
+                return "";
+            }
+
+            if (depth + 1 >= maxDepth) {
+                return ""; // Skip complex objects at max depth
+            }
+
+            String nestedFields = buildFieldsFromClass(rawFieldType, visitedPaths, depth + 1, excludedFields, fullPath, maxDepth, fallbackThreshold);
+            if (!nestedFields.isEmpty()) {
+                return indent + fieldName + " {\n" + nestedFields + "\n" + indent + "}";
+            } else {
+                return ""; // Complex object but no valid subfields
+            }
+        }
+
+        // Handle definite primitive types
+        if (isPrimitiveOrWrapper(rawFieldType)) {
             return indent + fieldName;
         }
 
-        // Handle nested objects
-        if (hasGraphQLFieldAnnotation(fieldType)) {
-            // Check if this nested object should be excluded
-            if (shouldExcludeNestedObject(fieldType, fullPath, excludedFields)) {
-                return ""; // Skip this entire field
-            }
-
-            String nestedFields = buildFieldsFromClass(fieldType, visited, depth + 1, excludedFields);
-            if (!nestedFields.isEmpty()) {
-                return indent + fieldName + " {\n" + nestedFields + "\n" + indent + "}";
-            }
-        }
-
-        // Simple field
-        return indent + fieldName;
+        return "";
     }
 
-    /**
-     * Checks if a nested object should be excluded based on excluded field paths.
-     */
-    private static boolean shouldExcludeNestedObject(Class<?> fieldType, String fullPath, Set<String> excludedFields) {
-        // Check if the object itself is excluded
+    private static boolean shouldExcludeNestedObject(Class<?> fieldType, String fullPath, Set<String> excludedFields, int fallbackThreshold) {
         if (excludedFields.contains(fullPath)) {
             return true;
         }
 
-        // Check if all fields of this object are excluded
-        Field[] nestedFields = fieldType.getDeclaredFields();
-        boolean hasIncludedField = false;
-
-        for (Field nestedField : nestedFields) {
+        for (Field nestedField : fieldType.getDeclaredFields()) {
             GraphQLField annotation = nestedField.getAnnotation(GraphQLField.class);
-            if (annotation != null && annotation.include()) {
-                String nestedFieldName = annotation.value().isEmpty() ?
-                        convertToGraphQLFieldName(nestedField.getName()) :
-                        annotation.value();
+            if (annotation != null && annotation.include() && annotation.fallbackPriority() <= fallbackThreshold) {
+                String nestedFieldName = annotation.value().isEmpty()
+                        ? convertToGraphQLFieldName(nestedField.getName())
+                        : annotation.value();
                 String nestedFullPath = fullPath + "." + nestedFieldName;
-
                 if (!excludedFields.contains(nestedFullPath)) {
-                    hasIncludedField = true;
-                    break;
+                    return false; // Found at least one valid field, don't exclude the object
                 }
             }
         }
 
-        return !hasIncludedField;
+        return true; // No valid fields found, exclude the object
     }
 
-    /**
-     * Gets the actual class for a field, handling generics.
-     */
     private static Class<?> getFieldClass(Field field) {
-        Class<?> fieldType = field.getType();
-
-        if (List.class.isAssignableFrom(fieldType)) {
+        if (List.class.isAssignableFrom(field.getType())) {
             Type genericType = field.getGenericType();
             if (genericType instanceof ParameterizedType) {
-                ParameterizedType paramType = (ParameterizedType) genericType;
-                Type[] typeArgs = paramType.getActualTypeArguments();
-                if (typeArgs.length > 0) {
-                    return (Class<?>) typeArgs[0];
+                Type[] actualTypes = ((ParameterizedType) genericType).getActualTypeArguments();
+                if (actualTypes.length == 1 && actualTypes[0] instanceof Class) {
+                    return (Class<?>) actualTypes[0];
+                }
+            }
+            return Object.class;
+        } else {
+            return field.getType();
+        }
+    }
+
+    private static Class<?> getFieldElementType(Field field) {
+        if (List.class.isAssignableFrom(field.getType())) {
+            Type genericType = field.getGenericType();
+            if (genericType instanceof ParameterizedType) {
+                Type[] typeArgs = ((ParameterizedType) genericType).getActualTypeArguments();
+                if (typeArgs.length == 1) {
+                    Type arg = typeArgs[0];
+                    if (arg instanceof Class<?>) {
+                        return (Class<?>) arg;
+                    }
+                    if (arg instanceof ParameterizedType) {
+                        return (Class<?>) ((ParameterizedType) arg).getRawType();
+                    }
                 }
             }
         }
-
-        return fieldType;
-    }
-
-    private static String getIndentation(int depth) {
-        return "  ".repeat(Math.max(0, depth));
+        return field.getType();
     }
 
     private static boolean hasGraphQLFieldAnnotation(Class<?> clazz) {
-        return clazz.isAnnotationPresent(GraphQLField.class);
+        for (Field field : clazz.getDeclaredFields()) {
+            GraphQLField annotation = field.getAnnotation(GraphQLField.class);
+            if (annotation != null && annotation.include()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String convertToGraphQLFieldName(String javaFieldName) {
         return javaFieldName;
     }
 
-    /**
-     * Helper class to store field information for fallback exclusion.
-     */
-    private static class FieldInfo {
-        final String path;
-        final int priority;
+    private static String getIndentation(int depth) {
+        return "  ".repeat(Math.max(0, depth));
+    }
 
-        FieldInfo(String path, int priority) {
-            this.path = path;
-            this.priority = priority;
-        }
+    private record FieldInfo(String path, int priority) {
     }
 }

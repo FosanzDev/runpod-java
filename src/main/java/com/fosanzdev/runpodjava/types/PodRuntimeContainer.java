@@ -1,7 +1,13 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "PodRuntimeContainer")
 public class PodRuntimeContainer {
+    @GraphQLField(fallbackPriority = 0)
     private Integer cpuPercent;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer memoryPercent;
 
     // Getters and Setters

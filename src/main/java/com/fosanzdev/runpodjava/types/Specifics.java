@@ -1,8 +1,16 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "Specifics")
 public class Specifics {
+    @GraphQLField(fallbackPriority = 0)
     private String stockStatus;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Double securePrice;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Double slsPrice;
 
     // Getters and Setters

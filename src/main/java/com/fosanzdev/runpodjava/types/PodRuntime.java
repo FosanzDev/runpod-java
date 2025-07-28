@@ -1,11 +1,20 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.util.List;
 
+@GraphQLField(typeName = "PodRuntime")
 public class PodRuntime {
+    @GraphQLField(fallbackPriority = 0)
     private PodRuntimeContainer container;
+    
+    @GraphQLField(fallbackPriority = 0)
     private List<PodRuntimeGpus> gpus;
+    
+    @GraphQLField(fallbackPriority = 0)
     private List<PodRuntimePorts> ports;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer uptimeInSeconds;
 
     // Getters and Setters

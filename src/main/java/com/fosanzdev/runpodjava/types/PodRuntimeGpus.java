@@ -1,8 +1,16 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "PodRuntimeGpus")
 public class PodRuntimeGpus {
+    @GraphQLField(fallbackPriority = 0)
     private String id;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer gpuUtilPercent;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Integer memoryUtilPercent;
 
     // Getters and Setters

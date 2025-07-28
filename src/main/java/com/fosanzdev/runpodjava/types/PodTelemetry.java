@@ -1,15 +1,30 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@GraphQLField(typeName = "PodTelemetry")
 public class PodTelemetry {
+    @GraphQLField(fallbackPriority = 0)
     private String state;
+    
+    @GraphQLField(fallbackPriority = 0)
     private LocalDateTime time;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Double cpuUtilization;
+    
+    @GraphQLField(fallbackPriority = 0)
     private Double memoryUtilization;
+    
+    @GraphQLField(fallbackPriority = 1)
     private GpuTelemetry averageGpuMetrics;
+    
+    @GraphQLField(fallbackPriority = 5)
     private List<GpuTelemetry> individualGpuMetrics;
+    
+    @GraphQLField(fallbackPriority = 1)
     private Integer lastStateTransitionTimestamp;
 
     // Getters and Setters

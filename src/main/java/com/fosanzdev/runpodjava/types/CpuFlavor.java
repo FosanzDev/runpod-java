@@ -1,15 +1,38 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "CpuFlavor")
 public class CpuFlavor {
+
+    @GraphQLField(fallbackPriority = 0)
     private String id;
+
+    @GraphQLField
     private String groupId;
+
+    @GraphQLField
     private String groupName;
+
+    @GraphQLField
     private String displayName;
+
+    @GraphQLField
     private Double minVcpu;
+
+    @GraphQLField
     private Integer maxVcpu;
+
+    @GraphQLField
     private Boolean vcpuBurstable;
+
+    @GraphQLField
     private Double ramMultiplier;
+
+    @GraphQLField
     private Integer diskLimitPerVcpu;
+
+    @GraphQLField
     private Specifics specifics;
 
     // Getters and Setters

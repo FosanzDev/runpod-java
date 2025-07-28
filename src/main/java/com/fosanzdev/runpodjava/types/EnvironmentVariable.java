@@ -1,7 +1,14 @@
 package com.fosanzdev.runpodjava.types;
 
+import com.fosanzdev.runpodjava.graphql.GraphQLField;
+
+@GraphQLField(typeName = "EnvironmentVariable")
 public class EnvironmentVariable {
+
+    @GraphQLField(fallbackPriority = 0)
     private String key;
+
+    @GraphQLField(fallbackPriority = 0)
     private String value;
 
     // Constructors

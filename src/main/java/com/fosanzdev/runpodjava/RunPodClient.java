@@ -77,7 +77,7 @@ public class RunPodClient {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new IOException("HTTP " + response.code() + ": " + response.message());
+                throw new IOException("HTTP " + response.code() + ": " + response.body().string());
             }
 
             if (response.body() == null) {
